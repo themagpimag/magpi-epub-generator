@@ -1,7 +1,15 @@
 import mps_api as mps
 
-for article in mps.Articles(mps.Issues().getIssueByTitle('13')['id'], True).data:
+# get the list of issues
+issues = mps.Issues()
+
+# get issue 13
+issue_13 = issues.getIssueByTitle('13')
+issue_13_id = issue_13['id']
+
+
+# print all the articles' titles
+for article in mps.Articles(issue_13_id).data:
     print article['title']
     
-    
-# this is a quick example, as I was testing it out
+# definitely see the commented code in mps_api.py
