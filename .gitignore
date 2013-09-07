@@ -1,0 +1,28 @@
+## generic files to ignore
+*~
+*.lock
+*.~lock.*
+*.DS_Store
+*.swp
+*.out
+
+## Scribus specific
+*.sla.autosave
+fontconfig
+*.pdf
+GenericCMYK.icm
+*.afm
+*.pfb
+
+## Apple meta data
+.AppleDouble
+
+## For java
+*.class
+
+## For python
+*.pyc
+
+## C/C++/Fortran etc..
+*.o
+*.exe
