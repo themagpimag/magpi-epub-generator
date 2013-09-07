@@ -26,3 +26,7 @@ GenericCMYK.icm
 ## C/C++/Fortran etc..
 *.o
 *.exe
+
+## Eclipse
+.project
+.pydevproject
