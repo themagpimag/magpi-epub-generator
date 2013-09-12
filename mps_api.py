@@ -1,70 +1,147 @@
-import urllib, json
+import urllib, json, re, HTMLParser
         
 class Connection(object):
-    '''Connection class to deal directly with passing the query string to the server side api, and return the decoded response'''
+    """Connection class to deal directly with passing the query string to the server side api, and return the decoded response"""
     def __init__(self):
         self.baseUrl = 'http://www.themagpi.com/mps_api/mps-api-v1.php'
     
     def getQueryResponse(self, params):
-        '''Send the encoded parameters, and return the decoded response'''
+        """Send the encoded parameters, and return the decoded response
+        Args:
+            params (dict): Parameters to pass in the query string
+            
+        Returns:
+            response (dict): JSON decoded from response string
+        """
         f = urllib.urlopen(self.baseUrl + "?%s" % urllib.urlencode(params))
         response = json.loads(f.read())
         self.status = response['status']
         return response
     
-class Issues(object):
-    '''
-    Holds a list of issues, along with their respective data:
-    self.con.status    :    status response returned by the server
-    self.data          :    data returned by the server
-    self.data[i]       :    an issue. These are not necessarily stored in a logical order
+class Post(object):
+    """Base object for post data received from the web server. Both issues and articles are posts."""
+    def __init__(self, data):
+        """
+        Args:
+            data (dict): A dictionary containing all post data
+        
+        Returns:
+            None
+        """
+        self.data = data
+        self.id = data['id']
+        self.title = data['title']
+        self.date = data['date']
+        self.url = data['url']
     
-    Each issue in self.data is a dictionary containing the following information:
-    (where issue = self.data[i])
-    issue['id']        :    the id of that particular issue. This is used server side, and is not the issue number
-    issue['title']     :    the issue number
-    issue['date']      :    date the issue was published online
-    issue['url']       :    url of the online issue page
-    issue['issuu']     :    url of the issue's issuu page
-    issue['pdf']       :    url of download the issue pdf
-    issue['cover']     :    url of the issue's cover image
-    issue['editorial'] :    the editorial text
-    '''
+class Issue(Post):
+    """Represents an issue on the website
+    
+    Attributes:
+        id (str): the id of that particular issue. This is used server side, and is not the issue number
+        title (str): the issue number
+        date (str): date the issue was published online
+        url (str): url of the online issue page
+        issuu (str): url of the issue's issuu page
+        pdf (str): url of download the issue pdf
+        cover (str): url of the issue's cover image
+        editorial (str): the editorial text
+    """
+    def __init__(self, data):
+        """
+        Args:
+            data (dict): A dictionary containing all post data
+        
+        Returns:
+            None
+        """
+        Post.__init__(self, data)
+        self.issuu = data['issuu']
+        self.pdf = data['pdf']
+        self.cover = data['cover']
+        self.editorial = data['editorial']
+        
+    def getArticles(self):
+        """Get the articles corresponding to this issue
+        
+        Returns:
+            articles
+        """
+        self.articles = Articles(self.id)
+        return self.articles
+        
+        
+class Article(Post):
+    """Represents an article within an issue
+    
+    Attributes:
+        id (str): the id of that particular issue. This is used server side, and is not the issue number
+        title (str): the issue number
+        date (str): date the issue was published online
+        url (str): url of the online issue page
+        header (str): url of the article's header image
+        content (str): the article content
+    """
+    def __init__(self, data):
+        """
+        Args:
+            data (dict): A dictionary containing all post data
+        
+        Returns:
+            None
+        """
+        Post.__init__(self, data)
+        self.header = data['header']
+        self.content = data['content']
+        self.unescapedTitle = self.getUnescapedTitle()
+        self.cleanTitle = self.getCleanTitle()
+        
+    def getUnescapedTitle(self):
+        return HTMLParser.HTMLParser().unescape(self.title)
+    
+    def getCleanTitle(self):
+        rx = re.compile('\W+')
+        return rx.sub('-', self.unescapedTitle)
+    
+    
+class Issues(object):
+    """
+    Holds a list of issues
+    """
     def __init__(self, html=True):
         self.con = Connection()
         response = self.con.getQueryResponse({'mode':'list_issues','html':str(html).lower()})
-        self.data = response['data']
+        self.issues = []
+        for issue in response['data']:
+            self.issues.append(Issue(issue))
     
     def getIssueByTitle(self, title):
-        '''Returns the issue with the specified title (issue number)'''
-        for issue in self.data:
-            if issue['title'] == str(title):
-                return issue    
+        """Returns the issue with the specified title (issue number)"""
+        for issue in self.issues:
+            if issue.title == str(title):
+                return issue
+            
+    def __getitem__(self, key):
+        return self.getIssueByTitle(str(key))
+    
+    def __iter__(self):
+        return self.issues
             
 class Articles(object):
-    '''
-    Holds a list of articles in a particular issue, along with their respective data:
-    self.con.status    :    status response returned by the server
-    self.data          :    data returned by the server
-    self.data[i]       :    an article. These are not necessarily stored in a logical order
-    
-    Each article in self.data is a dictionary containing the following information:
-    (where article = self.data[i])
-    article['id']        :    the id of that particular article
-    article['title']     :    the article title
-    article['date']      :    date the article was published online (corresponding to the issue date)
-    article['url']       :    url of the online article
-    article['header']    :    url of the article's header image
-    article['content']   :    the article content
-    '''
+    """
+    Holds a list of articles in a particular issue
+    """
     def __init__(self, issue_id, html=True):
         self.con = Connection()
         response = self.con.getQueryResponse({'mode':'list_articles', 'issue_id':issue_id, 'html':str(html).lower()})
-        self.data = response['data']
+        self.articles = []
+        for article in response['data']:
+            self.articles.append(Article(article))
+    
+    def __iter__(self):
+        for article in self.articles:
+            yield article
         
 
-    
-    
-    
-    
+
     

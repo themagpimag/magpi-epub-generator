@@ -30,3 +30,6 @@ GenericCMYK.icm
 ## Eclipse
 .project
 .pydevproject
+
+## epub
+*.epub
