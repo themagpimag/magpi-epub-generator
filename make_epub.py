@@ -4,7 +4,7 @@ import mps_api as mps
 class Epub(object):
     def __init__(self, name):
         self.regexImageSource = re.compile(r'''<img .*?src=['"](.*?)['"] ?.*?/>''')
-        self.xhtml_template = '''<?xml version='1.0' encoding='utf-8'?>
+        self.xhtml_template = u'''<?xml version='1.0' encoding='utf-8'?>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>{title}</title>
@@ -45,7 +45,7 @@ class Epub(object):
     def addArticle(self, article):
         article_content = self.xhtml_template.format(title=article.title, content=self.getArticleContentWithImages(article.content))
         f = open(article.cleanTitle + '.xhtml', 'w+')
-        f.write(article_content)
+        f.write(article_content.encode('UTF-8'))
         f.close()
         article_href = 'text/' + article.cleanTitle + '.xhtml'
         manifest_item = epub.opf.ManifestItem(identifier=article.cleanTitle,
@@ -137,6 +137,8 @@ class Epub(object):
         
                 
 e = Epub('The-MagPi-issue-13-en')
-e.make(mps.Issues().getIssueByTitle('13'))
+i = mps.Issues().getIssueByTitle('13')
+print i.title
+e.make(i)
 print 'done'
     
