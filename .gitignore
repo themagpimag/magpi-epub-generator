@@ -6,6 +6,9 @@
 *.swp
 *.out
 
+## pycharm
+/.idea/*
+
 ## Scribus specific
 *.sla.autosave
 fontconfig

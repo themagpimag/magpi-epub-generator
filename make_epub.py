@@ -115,7 +115,7 @@ class Epub(object):
     def make(self, issue):
         # add the meta
         self.addMetadata()
-        self.addCover(issue.cover)
+        #self.addCover(issue.cover)
         # add the editorial
         editorial_data = issue.data.copy()
         editorial_data['header'] = None
@@ -132,13 +132,11 @@ class Epub(object):
         
     def save(self):
         self.book.close()
-        
-        
-        
-                
-e = Epub('The-MagPi-issue-13-en')
-i = mps.Issues().getIssueByTitle('13')
-print i.title
-e.make(i)
+
+issues = mps.Issues()
+for i in range(1, 14):
+    e = Epub('The-MagPi-issue-'+str(i)+'-en')
+    issue = issues.getIssueByTitle(str(i))
+    print 'Creating issue', issue.title
+    e.make(issue)
 print 'done'
-    
