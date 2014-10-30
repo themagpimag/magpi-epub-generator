@@ -1,11 +1,18 @@
-import urllib, json, re, HTMLParser
+import urllib
+import json
+import re
+import HTMLParser
+        
         
 class Connection(object):
-    """Connection class to deal directly with passing the query string to the server side api, and return the decoded response"""
+    """Connection class to deal directly with passing the query string to the server side api,
+    and return the decoded response"""
+    
     def __init__(self):
         self.baseUrl = 'http://www.themagpi.com/mps_api/mps-api-v1.php'
+        self.status = None
     
-    def getQueryResponse(self, params):
+    def get_query_response(self, params):
         """Send the encoded parameters, and return the decoded response
         Args:
             params (dict): Parameters to pass in the query string
@@ -18,8 +25,10 @@ class Connection(object):
         self.status = response['status']
         return response
     
+    
 class Post(object):
     """Base object for post data received from the web server. Both issues and articles are posts."""
+    
     def __init__(self, data):
         """
         Args:
@@ -34,6 +43,7 @@ class Post(object):
         self.date = data['date']
         self.url = data['url']
     
+    
 class Issue(Post):
     """Represents an issue on the website
     
@@ -47,6 +57,7 @@ class Issue(Post):
         cover (str): url of the issue's cover image
         editorial (str): the editorial text
     """
+    
     def __init__(self, data):
         """
         Args:
@@ -60,8 +71,9 @@ class Issue(Post):
         self.pdf = data['pdf']
         self.cover = data['cover']
         self.editorial = data['editorial']
+        self.articles = None
         
-    def getArticles(self):
+    def get_articles(self):
         """Get the articles corresponding to this issue
         
         Returns:
@@ -82,6 +94,7 @@ class Article(Post):
         header (str): url of the article's header image
         content (str): the article content
     """
+    
     def __init__(self, data):
         """
         Args:
@@ -93,13 +106,13 @@ class Article(Post):
         Post.__init__(self, data)
         self.header = data['header']
         self.content = data['content']
-        self.unescapedTitle = self.getUnescapedTitle()
-        self.cleanTitle = self.getCleanTitle()
+        self.unescapedTitle = self.get_unescaped_title()
+        self.cleanTitle = self.get_clean_title()
         
-    def getUnescapedTitle(self):
+    def get_unescaped_title(self):
         return HTMLParser.HTMLParser().unescape(self.title)
     
-    def getCleanTitle(self):
+    def get_clean_title(self):
         rx = re.compile('\W+')
         return rx.sub('-', self.unescapedTitle)
     
@@ -108,32 +121,36 @@ class Issues(object):
     """
     Holds a list of issues
     """
+    
     def __init__(self, html=True):
         self.con = Connection()
-        response = self.con.getQueryResponse({'mode':'list_issues','html':str(html).lower()})
+        response = self.con.get_query_response({'mode': 'list_issues', 'html': str(html).lower()})
         self.issues = []
         for issue in response['data']:
             self.issues.append(Issue(issue))
     
-    def getIssueByTitle(self, title):
+    def get_issue_by_title(self, title):
         """Returns the issue with the specified title (issue number)"""
         for issue in self.issues:
             if issue.title == str(title):
                 return issue
             
     def __getitem__(self, key):
-        return self.getIssueByTitle(str(key))
+        return self.get_issue_by_title(str(key))
     
     def __iter__(self):
         return self.issues
-            
+
+
 class Articles(object):
     """
     Holds a list of articles in a particular issue
     """
+
     def __init__(self, issue_id, html=True):
         self.con = Connection()
-        response = self.con.getQueryResponse({'mode':'list_articles', 'issue_id':issue_id, 'html':str(html).lower()})
+        response = self.con.get_query_response(
+            {'mode': 'list_articles', 'issue_id': issue_id, 'html': str(html).lower()})
         self.articles = []
         for article in response['data']:
             self.articles.append(Article(article))
@@ -141,7 +158,3 @@ class Articles(object):
     def __iter__(self):
         for article in self.articles:
             yield article
-        
-
-
-    

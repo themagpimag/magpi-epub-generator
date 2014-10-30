@@ -1,5 +1,11 @@
-import epub, re, urllib, mimetypes, os, json
+import epub
+import re
+import urllib
+import mimetypes
+import os
+import json
 import mps_api as mps
+
 
 class Epub(object):
     def __init__(self, name):
@@ -17,15 +23,15 @@ class Epub(object):
   </body>
 </html>'''
         self.defaultMeta = {
-            'title':None,
-            'language':'en',
-            'publisher':'The MagPi LTD',
-            'dates':[],
+            'title': None,
+            'language': 'en',
+            'publisher': 'The MagPi LTD',
+            'dates': [],
         }
         self.book = epub.open_epub(name + '.epub', u'w')
         self.currentPlayOrder = 0
         
-    def addArticleContentImage(self, m):
+    def add_article_content_image(self, m):
         image_source = m.group(1)
         print 'Found image:', image_source
         image_name = image_source.split('/')[-1]
@@ -39,11 +45,13 @@ class Epub(object):
         self.book.add_item(f_name, manifest_item)
         return m.group(0).replace(image_source, '../'+epub_image_href)
         
-    def getArticleContentWithImages(self, content):
-        return re.sub(self.regexImageSource, self.addArticleContentImage, content)
+    def get_article_content_with_images(self, content):
+        return re.sub(self.regexImageSource, self.add_article_content_image, content)
         
-    def addArticle(self, article):
-        article_content = self.xhtml_template.format(title=article.title, content=self.getArticleContentWithImages(article.content))
+    def add_article(self, article):
+        article_content = self.xhtml_template.format(
+            title=article.title,
+            content=self.get_article_content_with_images(article.content))
         f = open(article.cleanTitle + '.xhtml', 'w+')
         f.write(article_content.encode('UTF-8'))
         f.close()
@@ -71,19 +79,19 @@ class Epub(object):
         # increment the playback order counter
         self.currentPlayOrder += 1
         
-    def getMetaFromFile(self, fname='meta.json'):
+    def get_meta_from_file(self, fname='meta.json'):
         try:
-           with open('meta.json') as f:
-               return json.loads(f.read())
+            with open(fname) as f:
+                return json.loads(f.read())
         except IOError:
-           print 'Meta file does not exist, generating defaults'
-           f = open('meta.json', 'w+')
-           f.write(json.dumps(self.defaultMeta))
-           f.close()
-           return self.defaultMeta
+            print 'Meta file does not exist, generating defaults'
+            f = open(fname, 'w+')
+            f.write(json.dumps(self.defaultMeta))
+            f.close()
+            return self.defaultMeta
         
-    def addMetadata(self):
-        meta = self.getMetaFromFile()
+    def add_metadata(self):
+        meta = self.get_meta_from_file()
         emeta = self.book.opf.metadata
         if meta['title']:
             emeta.add_title(meta['title'])
@@ -94,7 +102,7 @@ class Epub(object):
         if meta['dates']:
             emeta.dates = meta['dates']
             
-    def addCover(self, image_source):
+    def add_cover(self, image_source):
         image_name = image_source.split('/')[-1]
         f_name = urllib.urlretrieve(image_source)[0]
         image_ext = image_name.split('.')[-1]
@@ -109,24 +117,22 @@ class Epub(object):
         self.book.opf.guide.add_reference(href=epub_image_href,
                                           ref_type='cover',
                                           title='Cover')
-        
-        
-        
+
     def make(self, issue):
         # add the meta
-        self.addMetadata()
-        #self.addCover(issue.cover)
+        self.add_metadata()
+        #self.add_cover(issue.cover)
         # add the editorial
         editorial_data = issue.data.copy()
         editorial_data['header'] = None
         editorial_data['content'] = issue.editorial
         editorial_data['title'] = 'Issue ' + issue.title
-        self.addArticle(mps.Article(editorial_data))
+        self.add_article(mps.Article(editorial_data))
         # add the articles
-        articles = issue.getArticles()
+        articles = issue.get_articles()
         for article in articles:
             print 'Adding:', article.title
-            self.addArticle(article)
+            self.add_article(article)
         # save and close
         self.save()
         
@@ -136,7 +142,7 @@ class Epub(object):
 issues = mps.Issues()
 for i in range(1, 14):
     e = Epub('The-MagPi-issue-'+str(i)+'-en')
-    issue = issues.getIssueByTitle(str(i))
-    print 'Creating issue', issue.title
-    e.make(issue)
+    issueObj = issues.get_issue_by_title(str(i))
+    print 'Creating issue', issueObj.title
+    e.make(issueObj)
 print 'done'
