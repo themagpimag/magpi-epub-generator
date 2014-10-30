@@ -33,7 +33,7 @@ class Epub(object):
         
     def add_article_content_image(self, m):
         image_source = m.group(1)
-        print 'Found image:', image_source
+        print 'Found image:', image_source.encode('utf-8')
         image_name = image_source.split('/')[-1]
         f_name = urllib.urlretrieve(image_source)[0]
         epub_image_href = 'img/' + image_name
@@ -131,7 +131,7 @@ class Epub(object):
         # add the articles
         articles = issue.get_articles()
         for article in articles:
-            print 'Adding:', article.title
+            print 'Adding:', article.title.encode('utf-8')
             self.add_article(article)
         # save and close
         self.save()
@@ -143,6 +143,6 @@ issues = mps.Issues()
 for i in range(1, 14):
     e = Epub('The-MagPi-issue-'+str(i)+'-en')
     issueObj = issues.get_issue_by_title(str(i))
-    print 'Creating issue', issueObj.title
+    print 'Creating issue', issueObj.title.encode('utf-8')
     e.make(issueObj)
 print 'done'
