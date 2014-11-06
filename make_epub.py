@@ -143,6 +143,6 @@ issues = mps.Issues()
 for i in range(1, 14):
     e = Epub('The-MagPi-issue-'+str(i)+'-en')
     issueObj = issues.get_issue_by_title(str(i))
-    print 'Creating issue', issueObj.title.encode('utf-8')
+    print '\n\nCreating issue', issueObj.title.encode('utf-8')
     e.make(issueObj)
 print 'done'

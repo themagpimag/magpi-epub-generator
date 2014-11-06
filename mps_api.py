@@ -152,8 +152,13 @@ class Articles(object):
         response = self.con.get_query_response(
             {'mode': 'list_articles', 'issue_id': issue_id, 'html': str(html).lower()})
         self.articles = []
-        for article in response['data']:
-            self.articles.append(Article(article))
+        if response['status'] == 'ok':
+            for article in response['data']:
+                self.articles.append(Article(article))
+        else:
+            print '*Error: ', response['status'], response['data']
+            if response['data'] == 'no articles':
+                print '      : No articles uploaded to the website in this issue'
     
     def __iter__(self):
         for article in self.articles:
